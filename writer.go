@@ -11,11 +11,21 @@ import (
 type writer struct {
 	file   *os.File
 	size   int64
+	count  int64
 	writer *bufio.Writer
 }
 
 // write data
 func (w *writer) write(data []byte) error {
+	// append newline
+	data = append(data, "\n"...)
+	size := int64(len(data))
+
+	// close current segment for rotate
+	if w.size+size > Config.SegmentSize {
+		w.close()
+	}
+
 	// create a new segment
 	if w.file == nil {
 		if err := w.open(); err != nil {
@@ -23,15 +33,17 @@ func (w *writer) write(data []byte) error {
 		}
 	}
 
-	// append a newline and write to buffer
-	if _, err := w.writer.Write(append(data, "\n"...)); err != nil {
+	// write to buffer
+	if _, err := w.writer.Write(data); err != nil {
 		return err
 	}
 
-	// close current segment for rotate
-	w.size += int64(len(data))
-	if w.size > Config.SegmentSize {
-		w.close()
+	w.size += size
+
+	// sync data to disk
+	w.count++
+	if w.count >= Config.BatchSize {
+		w.sync()
 	}
 
 	return nil
@@ -46,15 +58,19 @@ func (w *writer) open() error {
 	}
 
 	w.size = 0
-	//w.writer = bufio.NewWriter(w.file)
-	w.writer = bufio.NewWriterSize(w.file, 99999999999999999)
+	// disable auto flush
+	w.writer = bufio.NewWriterSize(w.file, int(Config.SegmentSize))
 	return err
 }
 
 // sync data to disk
 func (w *writer) sync() {
-	if w.writer != nil {
-		_ = w.writer.Flush()
+	if w.writer == nil {
+		return
+	}
+
+	if err := w.writer.Flush(); err == nil {
+		w.count = 0
 	}
 }
 

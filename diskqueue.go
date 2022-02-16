@@ -19,9 +19,10 @@ var (
 
 	Config = &config{
 		Path:           "data",
+		BatchSize:      1000,
 		BatchTime:      time.Second,
 		SegmentPerm:    0600,
-		SegmentSize:    100 * 1024 * 1024,
+		SegmentSize:    50 * 1024 * 1024,
 		CheckpointFile: ".checkpoint",
 	}
 
