@@ -19,7 +19,7 @@ var (
 
 	Config = &config{
 		Path:           "data",
-		BatchSize:      1000,
+		BatchSize:      100,
 		BatchTime:      time.Second,
 		SegmentPerm:    0600,
 		SegmentSize:    50 * 1024 * 1024,
