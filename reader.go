@@ -45,7 +45,7 @@ func (r *reader) open() error {
 	}
 
 	// open the earliest segment
-	if r.file, err = os.OpenFile(files[0], os.O_RDONLY, Config.SegmentPerm); err != nil {
+	if r.file, err = os.OpenFile(files[0], os.O_RDONLY, Config.FilePerm); err != nil {
 		return err
 	}
 
@@ -97,7 +97,7 @@ func (r *reader) list() ([]string, error) {
 func (r *reader) sync() {
 	name := path.Join(Config.Path, Config.CheckpointFile)
 	offset := []byte(strconv.FormatInt(r.offset, 10))
-	_ = ioutil.WriteFile(name, offset, Config.SegmentPerm)
+	_ = ioutil.WriteFile(name, offset, Config.FilePerm)
 }
 
 // restore read offset

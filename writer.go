@@ -53,7 +53,7 @@ func (w *writer) write(data []byte) error {
 func (w *writer) open() error {
 	var err error
 	name := path.Join(Config.Path, fmt.Sprintf("%013d.data", time.Now().UnixNano()/1e6))
-	if w.file, err = os.OpenFile(name, os.O_CREATE|os.O_WRONLY, Config.SegmentPerm); err != nil {
+	if w.file, err = os.OpenFile(name, os.O_CREATE|os.O_WRONLY, Config.FilePerm); err != nil {
 		return err
 	}
 
