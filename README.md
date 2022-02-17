@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-	// Init
+	// init
 	diskqueue.Config.Path = "/tmp"
 	queue := diskqueue.Init()
 
@@ -48,9 +48,9 @@ func main() {
 ```
 Config = &config{
 	Path:           "data",           // data path
+	FilePerm:       0600,             // file's mode and permission bits
 	BatchSize:      100,              // number per sync
 	BatchTime:      time.Second,      // interval per sync
-	SegmentPerm:    0600,             // segment's mode and permission bits
 	SegmentSize:    50 * 1024 * 1024, // size of each segment
 	CheckpointFile: ".checkpoint",    // record read offset
 }
