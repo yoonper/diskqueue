@@ -27,13 +27,10 @@ var (
 		CheckpointFile:    ".checkpoint",
 		MiniRequiredSpace: 1024 * 1024 * 1024,
 	}
-
-	ErrEmpty  = errors.New("empty")
-	ErrClosed = errors.New("closed")
 )
 
-// Init diskqueue
-func Init() *Diskqueue {
+// Start diskqueue
+func Start() *Diskqueue {
 	queue := &Diskqueue{close: false}
 	queue.ticker = time.NewTicker(Config.BatchTime)
 	Reader.restore()
@@ -53,7 +50,7 @@ func Init() *Diskqueue {
 // Write data
 func (queue *Diskqueue) Write(data []byte) error {
 	if queue.close {
-		return ErrClosed
+		return errors.New("closed")
 	}
 
 	queue.Lock()
@@ -65,7 +62,7 @@ func (queue *Diskqueue) Write(data []byte) error {
 // Read data
 func (queue *Diskqueue) Read() ([]byte, error) {
 	if queue.close {
-		return nil, ErrClosed
+		return nil, errors.New("closed")
 	}
 
 	queue.RLock()

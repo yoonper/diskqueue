@@ -2,6 +2,7 @@ package diskqueue
 
 import (
 	"bufio"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
@@ -86,7 +87,7 @@ func (r *reader) list() ([]string, error) {
 	}
 
 	if len(files) == 0 {
-		return nil, ErrEmpty
+		return nil, errors.New("empty")
 	}
 
 	sort.Strings(files)
