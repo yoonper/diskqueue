@@ -47,11 +47,13 @@ func main() {
 
 ```
 Config = &config{
-	Path:           "data",           // data path
-	FilePerm:       0600,             // file's mode and permission bits
-	BatchSize:      100,              // number per sync
-	BatchTime:      time.Second,      // interval per sync
-	SegmentSize:    50 * 1024 * 1024, // size of each segment
-	CheckpointFile: ".checkpoint",    // record read offset
+	Path:              "data",
+	FilePerm:          0600,
+	BatchSize:         100,
+	BatchTime:         time.Second,
+	SegmentSize:       50 * 1024 * 1024,
+	SegmentLimit:      2048,
+	CheckpointFile:    ".checkpoint",
+	MiniRequiredSpace: 1024 * 1024 * 1024,
 }
 ```

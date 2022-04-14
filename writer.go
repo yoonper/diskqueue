@@ -2,9 +2,12 @@ package diskqueue
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
+	"syscall"
 	"time"
 )
 
@@ -51,6 +54,14 @@ func (w *writer) write(data []byte) error {
 
 // create a new segment
 func (w *writer) open() error {
+	if w.segmentNum() >= Config.SegmentLimit {
+		return errors.New("segment num exceeds the limit")
+	}
+
+	if w.diskFree() < Config.MiniRequiredSpace {
+		return errors.New("disk free space < minimum required space")
+	}
+
 	var err error
 	name := path.Join(Config.Path, fmt.Sprintf("%013d.data", time.Now().UnixNano()/1e6))
 	if w.file, err = os.OpenFile(name, os.O_CREATE|os.O_WRONLY, Config.FilePerm); err != nil {
@@ -86,4 +97,19 @@ func (w *writer) close() {
 	}
 
 	w.size, w.file, w.writer = 0, nil, nil
+}
+
+// segment num
+func (w *writer) segmentNum() int64 {
+	segments, _ := filepath.Glob(path.Join(Config.Path, "*.data"))
+	return int64(len(segments))
+}
+
+// disk free space
+func (w *writer) diskFree() int64 {
+	fs := syscall.Statfs_t{}
+	if err := syscall.Statfs(Config.Path, &fs); err != nil {
+		return 0
+	}
+	return int64(fs.Bfree) * fs.Bsize
 }
