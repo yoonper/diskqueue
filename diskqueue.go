@@ -18,14 +18,14 @@ var (
 	Reader = &reader{}
 
 	Config = &config{
-		Path:              "data",
-		FilePerm:          0600,
-		BatchSize:         100,
-		BatchTime:         time.Second,
-		SegmentSize:       50 * 1024 * 1024,
-		SegmentLimit:      2048,
-		CheckpointFile:    ".checkpoint",
-		MiniRequiredSpace: 1024 * 1024 * 1024,
+		Path:             "data",
+		FilePerm:         0600,
+		BatchSize:        100,
+		BatchTime:        time.Second,
+		SegmentSize:      50 * 1024 * 1024,
+		SegmentLimit:     2048,
+		CheckpointFile:   ".checkpoint",
+		MinRequiredSpace: 1024 * 1024 * 1024,
 	}
 )
 

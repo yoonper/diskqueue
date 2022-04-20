@@ -54,6 +54,6 @@ Config = &config{
 	SegmentSize:       50 * 1024 * 1024,
 	SegmentLimit:      2048,
 	CheckpointFile:    ".checkpoint",
-	MiniRequiredSpace: 1024 * 1024 * 1024,
+	MinRequiredSpace: 1024 * 1024 * 1024,
 }
 ```
