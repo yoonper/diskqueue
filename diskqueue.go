@@ -84,6 +84,6 @@ func (queue *Diskqueue) Read() ([]byte, error) {
 // Close diskqueue
 func (queue *Diskqueue) Close() {
 	queue.close = true
-	Writer.sync()
-	Reader.sync()
+	Writer.close()
+	Reader.close()
 }

@@ -101,6 +101,20 @@ func (r *reader) sync() {
 	_ = ioutil.WriteFile(name, offset, Config.FilePerm)
 }
 
+// close reader
+func (r *reader) close() {
+	if r.file == nil {
+		return
+	}
+
+	r.sync()
+	if err := r.file.Close(); err != nil {
+		return
+	}
+
+	r.file, r.offset, r.reader = nil, 0, nil
+}
+
 // restore read offset
 func (r *reader) restore() {
 	name := path.Join(Config.Path, Config.CheckpointFile)
