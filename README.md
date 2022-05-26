@@ -28,7 +28,10 @@ import (
 func main() {
 	// start
 	diskqueue.Config.Path = "/tmp"
-	queue := diskqueue.Start()
+	queue, err := diskqueue.Start()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// write data
 	err := queue.Write([]byte("data"))

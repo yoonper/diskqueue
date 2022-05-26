@@ -3,6 +3,7 @@ package diskqueue
 import (
 	"errors"
 	"io"
+	"os"
 	"sync"
 	"time"
 )
@@ -30,7 +31,11 @@ var (
 )
 
 // Start diskqueue
-func Start() *Diskqueue {
+func Start() (*Diskqueue, error) {
+	if _, err := os.Stat(Config.Path); err != nil {
+		return nil, err
+	}
+
 	queue := &Diskqueue{close: false}
 	queue.ticker = time.NewTicker(Config.BatchTime)
 	Reader.restore()
@@ -44,7 +49,8 @@ func Start() *Diskqueue {
 			queue.Unlock()
 		}
 	}()
-	return queue
+
+	return queue, nil
 }
 
 // Write data
