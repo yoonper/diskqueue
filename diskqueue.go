@@ -10,8 +10,9 @@ import (
 
 type Diskqueue struct {
 	sync.RWMutex
-	close  bool
-	ticker *time.Ticker
+	close     bool
+	closeChan chan bool
+	ticker    *time.Ticker
 }
 
 var (
@@ -36,20 +37,10 @@ func Start() (*Diskqueue, error) {
 		return nil, err
 	}
 
-	queue := &Diskqueue{close: false}
+	queue := &Diskqueue{close: false, closeChan: make(chan bool)}
 	queue.ticker = time.NewTicker(Config.BatchTime)
 	Reader.restore()
-
-	go func() {
-		for {
-			<-queue.ticker.C
-			queue.Lock()
-			Writer.sync()
-			Reader.sync()
-			queue.Unlock()
-		}
-	}()
-
+	go queue.sync()
 	return queue, nil
 }
 
@@ -83,7 +74,27 @@ func (queue *Diskqueue) Read() ([]byte, error) {
 
 // Close diskqueue
 func (queue *Diskqueue) Close() {
+	if queue.close {
+		return
+	}
+
 	queue.close = true
+	queue.closeChan <- true
 	Writer.close()
 	Reader.close()
+}
+
+// sync data
+func (queue *Diskqueue) sync() {
+	for {
+		select {
+		case <-queue.ticker.C:
+			queue.Lock()
+			Writer.sync()
+			Reader.sync()
+			queue.Unlock()
+		case <-queue.closeChan:
+			return
+		}
+	}
 }
