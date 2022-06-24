@@ -21,8 +21,9 @@ go get -u github.com/yoonper/diskqueue
 package main
 
 import (
-	"diskqueue"
 	"fmt"
+	"github.com/yoonper/diskqueue"
+	"log"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	}
 
 	// write data
-	err := queue.Write([]byte("data"))
+	err = queue.Write([]byte("data"))
 	fmt.Println(err)
 
 	// read data
