@@ -24,24 +24,45 @@ import (
 	"fmt"
 	"github.com/yoonper/diskqueue"
 	"log"
+	"time"
 )
 
 func main() {
+	var err error
+	var queue *diskqueue.Diskqueue
+
+	// config
+	diskqueue.Config.Path = "/tmp/diskqueue"
+	diskqueue.Config.BatchSize = 1
+
 	// start
-	diskqueue.Config.Path = "/tmp"
-	queue, err := diskqueue.Start()
-	if err != nil {
+	if queue, err = diskqueue.Start(); err != nil {
 		log.Fatalln(err)
 	}
 
-	// write data
-	err = queue.Write([]byte("data"))
-	fmt.Println(err)
+	// write
+	go func() {
+		for {
+			time.Sleep(time.Second)
+			data := []byte(time.Now().Format("2006-01-02 15:04:05"))
+			if err := queue.Write(data); err != nil {
+				fmt.Println(err)
+			}
+		}
+	}()
 
-	// read data
-	if data, err := queue.Read(); err != nil {
-		fmt.Println(data)
-	}
+	// read
+	go func() {
+		for {
+			time.Sleep(time.Second)
+			if index, offset, data, err := queue.Read(); err == nil {
+				fmt.Println(index, offset, string(data))
+				queue.Commit(index, offset) // commit
+			}
+		}
+	}()
+
+	select {}
 }
 ```
 

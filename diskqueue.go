@@ -1,6 +1,7 @@
 package diskqueue
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -10,9 +11,11 @@ import (
 
 type Diskqueue struct {
 	sync.RWMutex
-	close     bool
-	closeChan chan bool
-	ticker    *time.Ticker
+	close  bool
+	ticker *time.Ticker
+	wg     *sync.WaitGroup
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 var (
@@ -36,10 +39,10 @@ func Start() (*Diskqueue, error) {
 	if _, err := os.Stat(Config.Path); err != nil {
 		return nil, err
 	}
-
-	queue := &Diskqueue{close: false, closeChan: make(chan bool)}
+	queue := &Diskqueue{close: false, wg: &sync.WaitGroup{}}
 	queue.ticker = time.NewTicker(Config.BatchTime)
-	Reader.restore()
+	queue.ctx, queue.cancel = context.WithCancel(context.TODO())
+	_ = Reader.restore()
 	go queue.sync()
 	return queue, nil
 }
@@ -57,19 +60,30 @@ func (queue *Diskqueue) Write(data []byte) error {
 }
 
 // Read data
-func (queue *Diskqueue) Read() ([]byte, error) {
+func (queue *Diskqueue) Read() (int64, int64, []byte, error) {
 	if queue.close {
-		return nil, errors.New("closed")
+		return 0, 0, nil, errors.New("closed")
 	}
 
 	queue.RLock()
 	defer queue.RUnlock()
 
-	data, err := Reader.read()
+	index, offset, data, err := Reader.read()
 	if err == io.EOF && (Writer.file == nil || Reader.file.Name() != Writer.file.Name()) {
 		_ = Reader.rotate()
 	}
-	return data, err
+	return index, offset, data, err
+}
+
+// Commit index and offset
+func (queue *Diskqueue) Commit(index int64, offset int64) {
+	if queue.close {
+		return
+	}
+
+	ck := &Reader.checkpoint
+	ck.Index, ck.Offset = index, offset
+	Reader.sync()
 }
 
 // Close diskqueue
@@ -79,21 +93,23 @@ func (queue *Diskqueue) Close() {
 	}
 
 	queue.close = true
-	queue.closeChan <- true
+	queue.cancel()
+	queue.wg.Wait()
 	Writer.close()
 	Reader.close()
 }
 
 // sync data
 func (queue *Diskqueue) sync() {
+	queue.wg.Add(1)
+	defer queue.wg.Done()
 	for {
 		select {
 		case <-queue.ticker.C:
 			queue.Lock()
 			Writer.sync()
-			Reader.sync()
 			queue.Unlock()
-		case <-queue.closeChan:
+		case <-queue.ctx.Done():
 			return
 		}
 	}
