@@ -2,6 +2,7 @@ package diskqueue
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,10 +34,11 @@ func (r *reader) read() (int64, int64, []byte, error) {
 	}
 
 	// read a line
-	data, _, err := r.reader.ReadLine()
+	data, err := r.reader.ReadBytes('\n')
 	if err != nil {
 		return r.index, r.offset, nil, err
 	}
+	data = bytes.TrimRight(data, "\n")
 
 	r.offset += int64(len(data)) + 1
 	return r.index, r.offset, data, err
