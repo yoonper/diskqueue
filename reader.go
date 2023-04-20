@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -104,13 +103,13 @@ func (r *reader) close() {
 func (r *reader) sync() {
 	name := path.Join(Config.Path, Config.CheckpointFile)
 	data, _ := json.Marshal(&r.checkpoint)
-	_ = ioutil.WriteFile(name, data, Config.FilePerm)
+	_ = os.WriteFile(name, data, Config.FilePerm)
 }
 
 // restore index and offset
 func (r *reader) restore() (err error) {
 	name := path.Join(Config.Path, Config.CheckpointFile)
-	data, _ := ioutil.ReadFile(name)
+	data, _ := os.ReadFile(name)
 	_ = json.Unmarshal(data, &r.checkpoint)
 	r.index, r.offset = r.checkpoint.Index, r.checkpoint.Offset
 
@@ -136,7 +135,7 @@ func (r *reader) next() (string, error) {
 
 	for _, file := range files {
 		index := r.getIndex(file)
-		if index < r.checkpoint.Index {
+		if index <= r.checkpoint.Index {
 			_ = os.Remove(file) // remove expired segment
 		}
 
