@@ -78,6 +78,7 @@ Config = &config{
 	BatchTime:         time.Second,
 	SegmentSize:       50 * 1024 * 1024,
 	SegmentLimit:      2048,
+	WriteTimeout       300,
 	CheckpointFile:    ".checkpoint",
 	MinRequiredSpace:  1024 * 1024 * 1024,
 }

@@ -19,8 +19,8 @@ type Diskqueue struct {
 }
 
 var (
-	Writer = &writer{}
 	Reader = &reader{}
+	Writer = &writer{mtime: time.Now()}
 
 	Config = &config{
 		Path:             "data",
@@ -29,6 +29,7 @@ var (
 		BatchTime:        time.Second,
 		SegmentSize:      50 * 1024 * 1024,
 		SegmentLimit:     2048,
+		WriteTimeout:     300,
 		CheckpointFile:   ".checkpoint",
 		MinRequiredSpace: 1024 * 1024 * 1024,
 	}
@@ -43,7 +44,7 @@ func Start() (*Diskqueue, error) {
 	queue.ticker = time.NewTicker(Config.BatchTime)
 	queue.ctx, queue.cancel = context.WithCancel(context.TODO())
 	_ = Reader.restore()
-	go queue.sync()
+	go queue.schedule()
 	return queue, nil
 }
 
@@ -55,7 +56,6 @@ func (queue *Diskqueue) Write(data []byte) error {
 
 	queue.Lock()
 	defer queue.Unlock()
-
 	return Writer.write(data)
 }
 
@@ -99,16 +99,22 @@ func (queue *Diskqueue) Close() {
 	Reader.close()
 }
 
-// sync data
-func (queue *Diskqueue) sync() {
+// scheduled task
+func (queue *Diskqueue) schedule() {
 	queue.wg.Add(1)
 	defer queue.wg.Done()
 	for {
 		select {
 		case <-queue.ticker.C:
-			queue.Lock()
-			Writer.sync()
-			queue.Unlock()
+			func() {
+				queue.Lock()
+				defer queue.Unlock()
+				Writer.sync()
+				since := int64(time.Since(Writer.mtime).Seconds())
+				if since > Config.WriteTimeout {
+					Writer.close()
+				}
+			}()
 		case <-queue.ctx.Done():
 			return
 		}

@@ -16,10 +16,13 @@ type writer struct {
 	size   int64
 	count  int64
 	writer *bufio.Writer
+	mtime  time.Time
 }
 
 // write data
 func (w *writer) write(data []byte) error {
+	w.mtime = time.Now()
+
 	// append newline
 	data = append(data, "\n"...)
 	size := int64(len(data))
