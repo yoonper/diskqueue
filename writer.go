@@ -61,8 +61,8 @@ func (w *writer) open() error {
 		return errors.New("segment num exceeds the limit")
 	}
 
-	if w.diskFree() < Config.MinRequiredSpace {
-		return errors.New("disk free space < minimum required space")
+	if w.diskAvail() < Config.MinRequiredSpace {
+		return errors.New("disk available space < minimum required space")
 	}
 
 	var err error
@@ -108,11 +108,11 @@ func (w *writer) segmentNum() int64 {
 	return int64(len(segments))
 }
 
-// disk free space
-func (w *writer) diskFree() int64 {
+// disk available space
+func (w *writer) diskAvail() int64 {
 	fs := syscall.Statfs_t{}
 	if err := syscall.Statfs(Config.Path, &fs); err != nil {
 		return 0
 	}
-	return int64(fs.Bfree) * fs.Bsize
+	return int64(fs.Bavail) * fs.Bsize
 }
