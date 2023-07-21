@@ -93,6 +93,7 @@ func (queue *Diskqueue) Close() {
 	}
 
 	queue.close = true
+	queue.ticker.Stop()
 	queue.cancel()
 	queue.wg.Wait()
 	Writer.close()
