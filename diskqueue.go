@@ -65,10 +65,13 @@ func (queue *Diskqueue) Read() (int64, int64, []byte, error) {
 		return 0, 0, nil, errors.New("closed")
 	}
 
+	index, offset, data, err := Reader.read()
+	if err == nil {
+		return index, offset, data, err
+	}
+
 	queue.RLock()
 	defer queue.RUnlock()
-
-	index, offset, data, err := Reader.read()
 	if err == io.EOF && (Writer.file == nil || Reader.file.Name() != Writer.file.Name()) {
 		_ = Reader.rotate()
 	}
